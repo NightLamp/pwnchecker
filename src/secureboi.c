@@ -64,17 +64,15 @@ int main(int argc, char ** argv) {
 					exit(EXIT_FAILURE);
 				}
 
-				unsigned char fullHash[200];		
-				char partHash[7];		//5 for hash start, 1 for \n, 1 for NULLbyte				
+				unsigned char fullHash[SHA_DIGEST_LENGTH + 2];	// +2 for \n and \o
+				fullHash[SHA_DIGEST_LENGTH] = '\n';
+				fullHash[SHA_DIGEST_LENGTH + 1] = '\0';
+
 
 				//need to hash the thing
 				SHA1( (unsigned char *) argv[2], strlen(argv[2]), fullHash);
-				strncpy(partHash, fullHash, 5);
-				partHash[5] = '\n';
-				partHash[6] = '\0';				
 
-
-				if (write(fd, partHash, strlen(partHash)) == -1) {
+				if (write(fd, fullHash, SHA_DIGEST_LENGTH) == -1) {
 					perror("secureboi write");
 					close(fd);
 					exit(EXIT_FAILURE);
