@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -66,9 +67,6 @@ int main(int argc, char ** argv) {
 
 				unsigned char fullHash[SHA_DIGEST_LENGTH + 1];	// +1 for \o
 				fullHash[SHA_DIGEST_LENGTH] = '\0';
-
-
-				//need to hash the thing
 				SHA1( (unsigned char *) argv[2], strlen(argv[2]), fullHash);
 
 				if (write(fd, fullHash, SHA_DIGEST_LENGTH) == -1) {
@@ -91,16 +89,23 @@ int main(int argc, char ** argv) {
 
 
 			char ** checklist;		//Null terminated checklist
+			bool dynCl = false;
 			char * arr[2];
 			int i = 0;
 
+
 			if (argc == 3) {
 				//passwd given. have a checklist of 1
+				unsigned char * fullHash = calloc(sizeof(char), SHA_DIGEST_LENGTH + 1);
+				fullHash[SHA_DIGEST_LENGTH] = '\0';
+				SHA1( (unsigned char *) argv[2], strlen(argv[2]), fullHash);
+
 				checklist = arr;
-				checklist[0] = argv[2];
+				checklist[0] = fullHash;
 				i = 1;	//used to add Null terminator later
 			}
 			else if (argc == 2) {
+				dynCl = true;
 				//add all stored passwd to checklist
 
 				//open file to read it
@@ -130,16 +135,25 @@ int main(int argc, char ** argv) {
 				close(fd);
 			}
 			//go through all checklist items and see if they are bad
+
 			checklist[i] = NULL;	//TODO what do if checklist is already full?
+			
+			//print and free checklist
 			for (int a = 0; a < i; a++) {
 				printf("0x");
 				for (int c = 0; c < strlen(checklist[a]); c++) {
 					printf("%2x", checklist[a][c]);
 				}
 				printf("\n");
+				free(checklist[a]);
+			}
+			if (dynCl == true) {
+				free(checklist);
 			}
 		} 
 	}	
 
 	exit(EXIT_SUCCESS);
 }
+
+
