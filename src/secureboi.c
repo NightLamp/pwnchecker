@@ -1,5 +1,8 @@
-/**
+/*
  * Written By nightLamp
+ *
+ * Use below to compile on linux
+ * 	$ cc -o secureboi secureboi.c -lssl -lcrypto
  */
 
 
@@ -61,11 +64,11 @@ int main(int argc, char ** argv) {
 					exit(EXIT_FAILURE);
 				}
 
-				char fullHash[200];		
+				unsigned char fullHash[200];		
 				char partHash[7];		//5 for hash start, 1 for \n, 1 for NULLbyte				
 
 				//need to hash the thing
-				SHA1( (unsigned char *) argv[2], strlen(argv[2]), (unsigned char *) fullHash);
+				SHA1( (unsigned char *) argv[2], strlen(argv[2]), fullHash);
 				strncpy(partHash, fullHash, 5);
 				partHash[5] = '\n';
 				partHash[6] = '\0';				
