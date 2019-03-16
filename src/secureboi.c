@@ -3,6 +3,10 @@
  *
  * Use below to compile on linux
  * 	$ cc -o secureboi secureboi.c -lssl -lcrypto
+ * 
+ *
+ * look at this website for how to make raw value into string for curl
+ * 		https://memset.wordpress.com/2010/10/06/using-sha1-function/
  */
 
 
@@ -13,6 +17,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -132,7 +137,7 @@ int main(int argc, char ** argv) {
 
 			char ** checklist;		//Null terminated checklist
 			bool dynCl = false;
-			int i = 0;
+			int clSize = 0;
 
 			// If given a passwd, hash it then make a checklist of size 1; 
 			if (argc == 3) {
@@ -143,7 +148,7 @@ int main(int argc, char ** argv) {
 				static char * arr[2];
 				checklist = arr;
 				checklist[0] = fullHash;
-				i = 1;	//used to add Null terminator later
+				clSize = 1;
 			}
 			// Else check all the stored hashes
 			else if (argc == 2) {
@@ -167,8 +172,8 @@ int main(int argc, char ** argv) {
 					//check if read did read the whole thing
 					
 					//add each one to checklist
-					checklist[i++] = strdup(hashTemp);
-					if (i >= clBufSize) {
+					checklist[clSize++] = strdup(hashTemp);
+					if (clSize >= clBufSize) {
 						clBufSize += 10;
 						if (realloc(checklist, clBufSize) == NULL) {
 							perror("secureboi check");
@@ -180,11 +185,72 @@ int main(int argc, char ** argv) {
 			}
 			//go through all checklist items and see if they are bad
 
-			checklist[i] = NULL;	//TODO what do if checklist is already full?
+			checklist[clSize] = NULL;	//TODO what do if checklist is already full?
 			
 			//print and free checklist
-			printChecklist(checklist, i);
-			freeChecklist(checklist, i, dynCl);	
+			printChecklist(checklist, clSize);
+
+
+			//TODO change from raw to string
+			char hashStart[6];													// 5 for hash 1 for nullbyte 
+			char hashEnd[SHA_DIGEST_LENGTH-5 + 1];		// -5 for missing start, +1 for nullbyte 
+			hashStart[5] = '\0';
+			
+
+			for (int a = 0; a < clSize; a++) {
+				
+				strncpy(hashStart, checklist[a], 5);
+				strncpy(hashEnd, &checklist[a][5], SHA_DIGEST_LENGTH-5);
+
+				//get pipe doing its thing
+				int pipfd[2];
+				pipe(pipfd);
+
+				//call curl
+				if (fork() == 0) 	{
+
+					char url[200] = "https://api.pwnedpasswords.com/range/";
+					strcat(url, "454BD");	//hashStart);	
+
+					dup2(pipfd[1], STDOUT_FILENO);
+					close(pipfd[0]);
+					close(pipfd[1]);
+		
+					execlp("curl", "curl", "-s",  url, NULL); 				
+				}			
+
+				FILE * fp;
+				if ( (fp = fdopen(pipfd[0], "r" )) == NULL) {
+					fprintf(stderr, "fdopen error\n");
+					exit(EXIT_FAILURE);
+				}
+				close(pipfd[1]);
+
+				int stat;
+				wait(&stat);
+				if(WIFEXITED(stat)) {
+					if (WEXITSTATUS(stat) > 0) {
+						fprintf(stderr, "not a real URL\n");
+						exit(EXIT_FAILURE);
+					}
+				}
+
+				char buffer[SHA_DIGEST_LENGTH+20];
+				bool matchFound = false;
+
+				while (fgets(buffer, sizeof(buffer) -1, fp) != NULL) {
+
+					if (strncmp(buffer, hashEnd, strlen(hashEnd)-1) == 0) {
+						matchFound = true;
+						printf("we got a problem\n");
+					}
+				}
+				if (!matchFound) {
+					printf("no matches.\n");
+				}
+			}
+
+			freeChecklist(checklist, clSize, dynCl);	
 		} 
 	}	
 
