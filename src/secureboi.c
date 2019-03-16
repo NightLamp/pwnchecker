@@ -74,7 +74,7 @@ int main(int argc, char ** argv) {
 				partHash[6] = '\0';				
 
 
-				if (write(fd, argv[2], 5) == -1) {
+				if (write(fd, partHash, strlen(partHash)) == -1) {
 					perror("secureboi write");
 					close(fd);
 					exit(EXIT_FAILURE);
