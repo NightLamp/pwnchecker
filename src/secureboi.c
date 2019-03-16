@@ -90,23 +90,23 @@ int main(int argc, char ** argv) {
 
 			char ** checklist;		//Null terminated checklist
 			bool dynCl = false;
-			char * arr[2];
 			int i = 0;
 
-
+			// If given a passwd, hash it then make a checklist of size 1; 
 			if (argc == 3) {
-				//passwd given. have a checklist of 1
 				unsigned char * fullHash = calloc(sizeof(char), SHA_DIGEST_LENGTH + 1);
 				fullHash[SHA_DIGEST_LENGTH] = '\0';
 				SHA1( (unsigned char *) argv[2], strlen(argv[2]), fullHash);
 
+				static char * arr[2];
 				checklist = arr;
 				checklist[0] = fullHash;
 				i = 1;	//used to add Null terminator later
 			}
+			// Else check all the stored hashes
 			else if (argc == 2) {
+		
 				dynCl = true;
-				//add all stored passwd to checklist
 
 				//open file to read it
 				int fd = open(filePath, O_RDONLY);
@@ -115,7 +115,9 @@ int main(int argc, char ** argv) {
 					exit(EXIT_FAILURE);
 				}
 
+				//add all stored passwd to checklist
 				unsigned char hashTemp[SHA_DIGEST_LENGTH];
+				hashTemp[SHA_DIGEST_LENGTH] = '\0';
 				int clBufSize = 10;				
 				checklist = calloc(sizeof(char *), clBufSize);
 
@@ -142,7 +144,7 @@ int main(int argc, char ** argv) {
 			for (int a = 0; a < i; a++) {
 				printf("0x");
 				for (int c = 0; c < strlen(checklist[a]); c++) {
-					printf("%2x", checklist[a][c]);
+					printf("%c", checklist[a][c]);
 				}
 				printf("\n");
 				free(checklist[a]);
