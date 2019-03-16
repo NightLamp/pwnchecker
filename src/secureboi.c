@@ -61,11 +61,11 @@ int main(int argc, char ** argv) {
 					exit(EXIT_FAILURE);
 				}
 
-				char * fullHash;		
+				char fullHash[200];		
 				char partHash[7];		//5 for hash start, 1 for \n, 1 for NULLbyte				
 
 				//need to hash the thing
-				fullHash = (char *) SHA1( (unsigned char *) argv[2], strlen(argv[2]), NULL);
+				SHA1( (unsigned char *) argv[2], strlen(argv[2]), (unsigned char *) fullHash);
 				strncpy(partHash, fullHash, 5);
 				partHash[5] = '\n';
 				partHash[6] = '\0';				
