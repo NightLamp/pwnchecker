@@ -191,16 +191,22 @@ int main(int argc, char ** argv) {
 			printChecklist(checklist, clSize);
 
 
-			//TODO change from raw to string
+			char hashString[SHA_DIGEST_LENGTH];
 			char hashStart[6];													// 5 for hash 1 for nullbyte 
 			char hashEnd[SHA_DIGEST_LENGTH-5 + 1];		// -5 for missing start, +1 for nullbyte 
-			hashStart[5] = '\0';
-			
+			hashStart[5] = '\0';	
 
 			for (int a = 0; a < clSize; a++) {
-				
-				strncpy(hashStart, checklist[a], 5);
-				strncpy(hashEnd, &checklist[a][5], SHA_DIGEST_LENGTH-5);
+			
+				//changes from raw SHA1 output to string binary	
+					//TODO why doesnt this work?
+				for (int i = 0; i < SHA_DIGEST_LENGTH; i++) {
+					sprintf((char *)&(hashString[i*2]), "%02x", checklist[a][i]);
+				}
+				printf("hashString = %s\n", hashString);
+
+				strncpy(hashStart, hashString, 5);
+				strncpy(hashEnd, &hashString[5], SHA_DIGEST_LENGTH-5);
 
 				//get pipe doing its thing
 				int pipfd[2];
@@ -210,7 +216,7 @@ int main(int argc, char ** argv) {
 				if (fork() == 0) 	{
 
 					char url[200] = "https://api.pwnedpasswords.com/range/";
-					strcat(url, "454BD");	//hashStart);	
+					strcat(url, "hashStart");	//hashStart);	
 
 					dup2(pipfd[1], STDOUT_FILENO);
 					close(pipfd[0]);
