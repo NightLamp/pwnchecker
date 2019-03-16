@@ -25,6 +25,48 @@ char *strdup(const char *s);
 
 
 
+
+/**
+ * frees each element of a whole checklist/array. works for static and dynamic checklists/arrays.
+ *
+ * @param 	cl 				pointer to checklist
+ * @param 	size			size of checklist
+ * @param		dynamic		true if cl is dynamicly allocated, false if cl is statically allocated
+ */
+void freeChecklist(char ** cl, int size, bool dynamic) {
+	
+	for (int a = 0; a < size; a++) {
+		free(cl[a]);
+	}
+
+	if (dynamic == true) {
+		free(cl);
+	}
+}
+
+
+
+/**
+ * prints each element of an aray of arrays char by char on a separate line
+ *
+ * @param 	cl 		pointer to checklist
+ * @param		size	size of checklist (amount of elements)	
+ */
+void printChecklist(char **cl, int size) {
+	for (int a = 0; a < size; a++) {
+				printf("0x");
+				for (int c = 0; c < strlen(cl[a]); c++) {
+					printf("%c", cl[a][c]);
+				}
+				printf("\n");
+			}
+}
+
+
+
+/**
+ *  The main function
+ */
 int main(int argc, char ** argv) {
 
 	char * filePath;
@@ -141,21 +183,11 @@ int main(int argc, char ** argv) {
 			checklist[i] = NULL;	//TODO what do if checklist is already full?
 			
 			//print and free checklist
-			for (int a = 0; a < i; a++) {
-				printf("0x");
-				for (int c = 0; c < strlen(checklist[a]); c++) {
-					printf("%c", checklist[a][c]);
-				}
-				printf("\n");
-				free(checklist[a]);
-			}
-			if (dynCl == true) {
-				free(checklist);
-			}
+			printChecklist(checklist, i);
+			freeChecklist(checklist, i, dynCl);	
 		} 
 	}	
 
 	exit(EXIT_SUCCESS);
 }
-
 
