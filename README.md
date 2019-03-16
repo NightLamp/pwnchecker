@@ -1,4 +1,4 @@
-#secureboi
+# secureboi
 
 This program checks if your passwords have been leaked using the data from "Have I Been Pwned".
 
