@@ -1,4 +1,4 @@
-# secureboi
+# Pwncheck
 
 This program checks if your passwords have been leaked using the data from "Have I Been Pwned".
 It is planned to be run daily and on startup, but idk how it will notify users yet.
