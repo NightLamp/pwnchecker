@@ -100,28 +100,27 @@ int main(int argc, char ** argv) {
 	}
 	else {
 		if (strcmp(argv[1], "store") == 0) {
-			
+
+			//open file and get descriptor
+			int fd = open(filePath, O_WRONLY | O_APPEND);
+			if (fd == -1) {
+				perror("secureboi");
+				exit(EXIT_FAILURE);
+			}
+
 			if(argc == 2) {
 				//get pw through stdin
 			}
 			else if (argc == 3) {
 				
-
 				printf("storing to your file...\n");
-
-				//open file and get descriptor
-				int fd = open(filePath, O_WRONLY | O_APPEND);
-				if (fd == -1) {
-					perror("secureboi");
-					exit(EXIT_FAILURE);
-				}
 
 				//setup vars for hashing
 				unsigned char fullHash[SHA_DIGEST_LENGTH + 1];	// +1 for \o
 				fullHash[SHA_DIGEST_LENGTH] = '\0';
 				SHA1( (unsigned char *) argv[2], strlen(argv[2]), fullHash);
 
-				//write hash to file
+				//write raw hash to file
 				if (write(fd, fullHash, SHA_DIGEST_LENGTH) == -1) {
 					perror("secureboi write");
 					close(fd);
@@ -140,6 +139,8 @@ int main(int argc, char ** argv) {
 
 			// If given a passwd, hash it then make a checklist of size 1; 
 			if (argc == 3) {
+				
+				//make a raw hash.
 				unsigned char * fullHash = calloc(sizeof(char), SHA_DIGEST_LENGTH + 1);
 				fullHash[SHA_DIGEST_LENGTH] = '\0';
 				SHA1( (unsigned char *) argv[2], strlen(argv[2]), fullHash);
@@ -200,16 +201,15 @@ int main(int argc, char ** argv) {
 			
 				//changes from raw SHA1 output to string binary	
 				for (int i = 0; i < SHA_DIGEST_LENGTH; i++) {
-					sprintf((char *)&(hashString[i*2]), "%02x", (unsigned char) toupper(checklist[a][i]));
+
+					unsigned char rawByte = checklist[a][i];
+					sprintf((char *)&(hashString[i*2]), "%02X", rawByte);
 				}
-				printf("hashString = %s\n", hashString);
 
 				//split hashString into first 5 and remaining hex values
 				strncpy(hashStart, hashString, 5);
 				strcpy(hashEnd, &hashString[5]);
 
-
-				printf("start = %s and end is %s\n", hashStart, hashEnd);
 
 				//get pipe doing its thing
 				int pipfd[2];
@@ -257,7 +257,7 @@ int main(int argc, char ** argv) {
 
 					if (strncmp(buffer, hashEnd, strlen(hashEnd)-1) == 0) {
 						matchFound = true;
-						printf("we got a problem\n");
+						printf("we got a problem \n");
 					}
 				}
 				if (!matchFound) {
