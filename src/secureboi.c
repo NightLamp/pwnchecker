@@ -31,13 +31,13 @@ char *strdup(const char *s);
 
 
 void printWarning(void) {
-	printf("This is powered by \"Have I been Pwned?\" and Curl\n\n \
-					This program cannot guarantee security at this state,\n \
-					use at your OWN risk.\n \
-					Note that any password typed in will be shown in plain text on a cli.\n\n	\
-					Commands:\n \
-					store [passwd]\n \
-					check [passwd]\n \");
+	printf("This is powered by \"Have I been Pwned?\" and Curl\n\n"
+					"This program cannot guarantee security at this state,\n"
+					"use at your OWN risk.\n"
+					"Note that any password typed in will be shown in plain text on a cli.\n\n"
+					"Commands:\n"
+					"store [passwd]\n"
+					"check [passwd]\n");
 	
 }
 
