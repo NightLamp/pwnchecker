@@ -90,7 +90,7 @@ int main(int argc, char ** argv) {
 		}
 	}
 
-	//if file doesnt exist then make it
+	//TODO if file doesnt exist then make it
 
 
 	if (argc == 1) {
@@ -105,17 +105,22 @@ int main(int argc, char ** argv) {
 			}
 			else if (argc == 3) {
 				
+
 				printf("storing to your file...\n");
+
+				//open file and get descriptor
 				int fd = open(filePath, O_WRONLY | O_APPEND);
 				if (fd == -1) {
 					perror("secureboi");
 					exit(EXIT_FAILURE);
 				}
 
+				//setup vars for hashing
 				unsigned char fullHash[SHA_DIGEST_LENGTH + 1];	// +1 for \o
 				fullHash[SHA_DIGEST_LENGTH] = '\0';
 				SHA1( (unsigned char *) argv[2], strlen(argv[2]), fullHash);
 
+				//write hash to file
 				if (write(fd, fullHash, SHA_DIGEST_LENGTH) == -1) {
 					perror("secureboi write");
 					close(fd);
@@ -127,13 +132,6 @@ int main(int argc, char ** argv) {
 			}
 		}
 		else if (strcmp(argv[1], "check") == 0) {
-			//check password hashes using "Have I Been Pwned?" database 
-			
-			//is there a password given?
-				//check for that password
-
-			//check all stored passwords
-
 
 			char ** checklist;		//Null terminated checklist
 			bool dynCl = false;
@@ -145,7 +143,7 @@ int main(int argc, char ** argv) {
 				fullHash[SHA_DIGEST_LENGTH] = '\0';
 				SHA1( (unsigned char *) argv[2], strlen(argv[2]), fullHash);
 
-				static char * arr[2];
+				static char * arr[2]; //static to ensure it doesnt dissapear on me
 				checklist = arr;
 				checklist[0] = fullHash;
 				clSize = 1;
@@ -162,14 +160,14 @@ int main(int argc, char ** argv) {
 					exit(EXIT_FAILURE);
 				}
 
-				//add all stored passwd to checklist
 				unsigned char hashTemp[SHA_DIGEST_LENGTH];
 				hashTemp[SHA_DIGEST_LENGTH] = '\0';
 				int clBufSize = 10;				
 				checklist = calloc(sizeof(char *), clBufSize);
 
+				//add all stored passwd to checklist
 				while (read(fd, hashTemp, SHA_DIGEST_LENGTH) != 0) {
-					//check if read did read the whole thing
+					//TODO check if read did read the whole thing or some
 					
 					//add each one to checklist
 					checklist[clSize++] = strdup(hashTemp);
@@ -183,11 +181,13 @@ int main(int argc, char ** argv) {
 				}
 				close(fd);
 			}
-			//go through all checklist items and see if they are bad
 
 			checklist[clSize] = NULL;	//TODO what do if checklist is already full?
+
+			//go through all checklist items and see if they are compromised
+
 			
-			//print and free checklist
+			//print checklist
 			printChecklist(checklist, clSize);
 
 
@@ -196,17 +196,20 @@ int main(int argc, char ** argv) {
 			char hashEnd[SHA_DIGEST_LENGTH-5 + 1];		// -5 for missing start, +1 for nullbyte 
 			hashStart[5] = '\0';	
 
+			// go though each item in checklist
 			for (int a = 0; a < clSize; a++) {
 			
+				//TODO why doesnt this work?
 				//changes from raw SHA1 output to string binary	
-					//TODO why doesnt this work?
 				for (int i = 0; i < SHA_DIGEST_LENGTH; i++) {
 					sprintf((char *)&(hashString[i*2]), "%02x", checklist[a][i]);
 				}
 				printf("hashString = %s\n", hashString);
 
+				//split hashString into first 5 and remaining hex values
 				strncpy(hashStart, hashString, 5);
 				strncpy(hashEnd, &hashString[5], SHA_DIGEST_LENGTH-5);
+
 
 				//get pipe doing its thing
 				int pipfd[2];
@@ -223,15 +226,20 @@ int main(int argc, char ** argv) {
 					close(pipfd[1]);
 		
 					execlp("curl", "curl", "-s",  url, NULL); 				
+					fprintf("stderr", "secureboi: error calling curl\n");
+					exit(EXIT_FAILURE);
 				}			
 
+				
+				//setup curl output to be read
 				FILE * fp;
 				if ( (fp = fdopen(pipfd[0], "r" )) == NULL) {
-					fprintf(stderr, "fdopen error\n");
+					fprintf(stderr, "secureboi: fdopen error\n");
 					exit(EXIT_FAILURE);
 				}
 				close(pipfd[1]);
 
+				//wait and then check status of child (curl)
 				int stat;
 				wait(&stat);
 				if(WIFEXITED(stat)) {
@@ -244,6 +252,7 @@ int main(int argc, char ** argv) {
 				char buffer[SHA_DIGEST_LENGTH+20];
 				bool matchFound = false;
 
+				//read curl output line by line
 				while (fgets(buffer, sizeof(buffer) -1, fp) != NULL) {
 
 					if (strncmp(buffer, hashEnd, strlen(hashEnd)-1) == 0) {
