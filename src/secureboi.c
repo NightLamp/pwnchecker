@@ -291,7 +291,7 @@ int main(int argc, char ** argv) {
 
 					if (strncmp(buffer, hashEnd, strlen(hashEnd)-1) == 0) {
 						matchFound = true;
-						printf("we got a problem \n");
+						printf("Password Compromised\n");
 					}
 				}
 				if (!matchFound) {
