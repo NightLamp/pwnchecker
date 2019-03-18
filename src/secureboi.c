@@ -4,9 +4,6 @@
  * Use below to compile on linux
  * 	$ cc -o secureboi secureboi.c -lssl -lcrypto
  * 
- *
- * look at this website for how to make raw value into string for curl
- * 		https://memset.wordpress.com/2010/10/06/using-sha1-function/
  */
 
 
@@ -40,7 +37,6 @@ void printWarning(void) {
 					"check [passwd]\n");
 	
 }
-
 
 
 
@@ -81,9 +77,36 @@ void printRawChecklist(char **cl, int size) {
 }
 
 
-char * stringToSHA1(char * dest, char * source) {
 
-	return 'a';
+/**
+ * Returns a raw hash of a string
+ * Assumes dest array is of appropriate size.
+ *
+ *
+ * @param		dest		array to be filled with raw hash
+ * @param		source	array holding string to be hashed
+ * @return 					pointer to result char array
+ */
+char * stringToRawSHA1(unsigned char * dest, char * source) {
+
+	dest[SHA_DIGEST_LENGTH] = '\0';
+	SHA1( (unsigned char *) source, strlen(source), dest);
+
+	return dest;
+}
+
+/**
+ * Changes from raw SHA1 output to string binary 
+ * Assumes arrays are SHA_DIGEST_LENGTH in size 
+ *
+ */
+char * rawToHexString(char * hexStr, char * rawStr) {
+
+	for (int i = 0; i < SHA_DIGEST_LENGTH; i++) {
+		unsigned char rawByte = rawStr[i];
+		sprintf((char *)&(hexStr[i*2]), "%02X", rawByte);
+	}
+	return hexStr;
 }
 
 
@@ -93,7 +116,6 @@ char * stringToSHA1(char * dest, char * source) {
  */
 int main(int argc, char ** argv) {
 
-	printWarning();
 
 	char * filePath;
 
@@ -114,12 +136,13 @@ int main(int argc, char ** argv) {
 
 
 	if (argc == 1) {
-	
+		printWarning();
 	}
 	else {
 		if (strcmp(argv[1], "store") == 0) {
 
-			//open file and get descriptor
+			//open passwd storing file and get descriptor
+			//should be in ~/.secureboi
 			int fd = open(filePath, O_WRONLY | O_APPEND);
 			if (fd == -1) {
 				perror("secureboi");
@@ -135,8 +158,7 @@ int main(int argc, char ** argv) {
 
 				//setup vars for hashing
 				unsigned char fullHash[SHA_DIGEST_LENGTH + 1];	// +1 for \o
-				fullHash[SHA_DIGEST_LENGTH] = '\0';
-				SHA1( (unsigned char *) argv[2], strlen(argv[2]), fullHash);
+				stringToRawSHA1(fullHash, argv[2]);
 
 				//write raw hash to file
 				if (write(fd, fullHash, SHA_DIGEST_LENGTH) == -1) {
@@ -160,8 +182,7 @@ int main(int argc, char ** argv) {
 				
 				//make a raw hash.
 				unsigned char * fullHash = calloc(sizeof(char), SHA_DIGEST_LENGTH + 1);
-				fullHash[SHA_DIGEST_LENGTH] = '\0';
-				SHA1( (unsigned char *) argv[2], strlen(argv[2]), fullHash);
+				stringToRawSHA1(fullHash, argv[2]);
 
 				static char * arr[2]; //static to ensure it doesnt dissapear on me
 				checklist = arr;
@@ -216,13 +237,8 @@ int main(int argc, char ** argv) {
 
 			// go though each item in checklist
 			for (int a = 0; a < clSize; a++) {
-			
-				//changes from raw SHA1 output to string binary	
-				for (int i = 0; i < SHA_DIGEST_LENGTH; i++) {
-
-					unsigned char rawByte = checklist[a][i];
-					sprintf((char *)&(hashString[i*2]), "%02X", rawByte);
-				}
+		
+				rawToHexString(hashString, checklist[a]);
 
 				//split hashString into first 5 and remaining hex values
 				strncpy(hashStart, hashString, 5);
