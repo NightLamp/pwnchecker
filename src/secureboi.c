@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -57,7 +58,7 @@ void freeChecklist(char ** cl, int size, bool dynamic) {
  * @param 	cl 		pointer to checklist
  * @param		size	size of checklist (amount of elements)	
  */
-void printChecklist(char **cl, int size) {
+void printRawChecklist(char **cl, int size) {
 	for (int a = 0; a < size; a++) {
 				printf("0x");
 				for (int c = 0; c < strlen(cl[a]); c++) {
@@ -185,31 +186,30 @@ int main(int argc, char ** argv) {
 			checklist[clSize] = NULL;	//TODO what do if checklist is already full?
 
 			//go through all checklist items and see if they are compromised
-
 			
-			//print checklist
-			printChecklist(checklist, clSize);
-
-
 			char hashString[SHA_DIGEST_LENGTH];
 			char hashStart[6];													// 5 for hash 1 for nullbyte 
 			char hashEnd[SHA_DIGEST_LENGTH-5 + 1];		// -5 for missing start, +1 for nullbyte 
+
+			//add nullbytes
 			hashStart[5] = '\0';	
+			hashEnd[SHA_DIGEST_LENGTH-5] = '\0';
 
 			// go though each item in checklist
 			for (int a = 0; a < clSize; a++) {
 			
-				//TODO why doesnt this work?
 				//changes from raw SHA1 output to string binary	
 				for (int i = 0; i < SHA_DIGEST_LENGTH; i++) {
-					sprintf((char *)&(hashString[i*2]), "%02x", checklist[a][i]);
+					sprintf((char *)&(hashString[i*2]), "%02x", (unsigned char) toupper(checklist[a][i]));
 				}
 				printf("hashString = %s\n", hashString);
 
 				//split hashString into first 5 and remaining hex values
 				strncpy(hashStart, hashString, 5);
-				strncpy(hashEnd, &hashString[5], SHA_DIGEST_LENGTH-5);
+				strcpy(hashEnd, &hashString[5]);
 
+
+				printf("start = %s and end is %s\n", hashStart, hashEnd);
 
 				//get pipe doing its thing
 				int pipfd[2];
@@ -219,14 +219,14 @@ int main(int argc, char ** argv) {
 				if (fork() == 0) 	{
 
 					char url[200] = "https://api.pwnedpasswords.com/range/";
-					strcat(url, "hashStart");	//hashStart);	
+					strcat(url, hashStart);	
 
 					dup2(pipfd[1], STDOUT_FILENO);
 					close(pipfd[0]);
 					close(pipfd[1]);
 		
 					execlp("curl", "curl", "-s",  url, NULL); 				
-					fprintf("stderr", "secureboi: error calling curl\n");
+					fprintf(stderr, "secureboi: error calling curl\n");
 					exit(EXIT_FAILURE);
 				}			
 
