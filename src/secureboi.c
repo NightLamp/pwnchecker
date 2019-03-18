@@ -30,6 +30,18 @@
 char *strdup(const char *s);
 
 
+void printWarning(void) {
+	printf("This is powered by \"Have I been Pwned?\" and Curl\n\n \
+					This program cannot guarantee security at this state,\n \
+					use at your OWN risk.\n \
+					Note that any password typed in will be shown in plain text on a cli.\n\n	\
+					Commands:\n \
+					store [passwd]\n \
+					check [passwd]\n \");
+	
+}
+
+
 
 
 /**
@@ -60,12 +72,18 @@ void freeChecklist(char ** cl, int size, bool dynamic) {
  */
 void printRawChecklist(char **cl, int size) {
 	for (int a = 0; a < size; a++) {
-				printf("0x");
-				for (int c = 0; c < strlen(cl[a]); c++) {
-					printf("%c", cl[a][c]);
-				}
-				printf("\n");
-			}
+		printf("0x");
+		for (int c = 0; c < strlen(cl[a]); c++) {
+			printf("%c", cl[a][c]);
+		}
+		printf("\n");
+	}
+}
+
+
+char * stringToSHA1(char * dest, char * source) {
+
+	return 'a';
 }
 
 
@@ -75,8 +93,9 @@ void printRawChecklist(char **cl, int size) {
  */
 int main(int argc, char ** argv) {
 
+	printWarning();
+
 	char * filePath;
-	
 
 	if ( (filePath = getenv("HOME")) == NULL) {
 		perror("secureboi");
@@ -95,8 +114,7 @@ int main(int argc, char ** argv) {
 
 
 	if (argc == 1) {
-		printf("This is powered by \"Have I been Pwned?\"\n\n");
-		printf("This program cannot guarantee security at this state,\nuse at your OWN risk.\n");
+	
 	}
 	else {
 		if (strcmp(argv[1], "store") == 0) {
